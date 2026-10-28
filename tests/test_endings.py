@@ -1,4 +1,5 @@
 """Tests unitaires de endings.py (constantes)."""
+
 from endings import ENDINGS
 
 

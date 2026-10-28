@@ -13,6 +13,7 @@ IMPORTANT: ne JAMAIS lancer ce script directement dans le repertoire du
 repo : il ecrit ses fichiers *-compilated-*.json et graph/ dans le CWD, ce
 qui ecraserait les fichiers commites. Tout se passe dans tmp_path.
 """
+
 import json
 import shutil
 import subprocess
@@ -106,9 +107,17 @@ class TestBothBooksCompile:
         proc, work_dir = run_pipeline(tmp_path, book_number)
         assert proc.returncode == 0
         expected_suffixes = [
-            "data", "combats", "endings", "good-endings", "bad-endings",
-            "secrets", "nodes-by-chapter", "nodes-by-sub-arc", "success",
-            "success-chapters", "all-objects",
+            "data",
+            "combats",
+            "endings",
+            "good-endings",
+            "bad-endings",
+            "secrets",
+            "nodes-by-chapter",
+            "nodes-by-sub-arc",
+            "success",
+            "success-chapters",
+            "all-objects",
         ]
         for suffix in expected_suffixes:
             path = work_dir / f"fdcn-{book_number}-compilated-{suffix}.json"
@@ -149,7 +158,9 @@ class TestBookInvariants:
             seen.add(nid)
             stack.extend(s for s in nodes[nid]["sons"] if s not in seen)
         orphans = set(nodes.keys()) - seen
-        assert orphans == set(), f"livre {book_number}: noeuds inatteignables depuis 1: {sorted(orphans)}"
+        assert orphans == set(), (
+            f"livre {book_number}: noeuds inatteignables depuis 1: {sorted(orphans)}"
+        )
 
     def test_ending_nodes_are_flagged_and_well_formed(self, compiled_book):
         """
@@ -167,10 +178,16 @@ class TestBookInvariants:
         )
         for nid in ending_nodes:
             c = nodes[nid]
-            assert c["ending_type"] in (1, 2), f"{nid}: ending_type invalide ({c['ending_type']})"
-            assert c["sons"] == [], f"{nid}: un noeud de fin ne devrait pas avoir de fils"
+            assert c["ending_type"] in (1, 2), (
+                f"{nid}: ending_type invalide ({c['ending_type']})"
+            )
+            assert c["sons"] == [], (
+                f"{nid}: un noeud de fin ne devrait pas avoir de fils"
+            )
 
-    def test_billy_type_tokens_used_in_conditions_are_a_known_subset(self, compiled_book):
+    def test_billy_type_tokens_used_in_conditions_are_a_known_subset(
+        self, compiled_book
+    ):
         """
         Les types de Billy referencés dans des conditions de saut doivent
         rester dans la liste blanche connue (BILLY_TYPES). fdcn.py vérifie
@@ -188,13 +205,20 @@ class TestBookInvariants:
             for cond_json in c["jump_conditions"].values():
                 all_conditions_tokens |= _collect_end_tokens(cond_json)
 
-        assert all_conditions_tokens, f"sanity: le livre {book_number} doit avoir des conditions de saut"
+        assert all_conditions_tokens, (
+            f"sanity: le livre {book_number} doit avoir des conditions de saut"
+        )
 
         declared_objects = set(
-            json.loads((REPO_ROOT / f"fdcn-{book_number}.all_objects.json").read_text(encoding="utf-8")).keys()
+            json.loads(
+                (REPO_ROOT / f"fdcn-{book_number}.all_objects.json").read_text(
+                    encoding="utf-8"
+                )
+            ).keys()
         )
         likely_billy_type_typos = {
-            token for token in all_conditions_tokens
+            token
+            for token in all_conditions_tokens
             if token not in declared_objects and token not in BILLY_TYPES
         }
         assert likely_billy_type_typos == set(), (

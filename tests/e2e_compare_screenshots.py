@@ -10,6 +10,7 @@ Usage:
 À utiliser UNIQUEMENT après revue humaine d'un changement visuel volontaire
 (jamais automatiquement en CI).
 """
+
 import argparse
 import shutil
 import sys
@@ -32,7 +33,11 @@ def compare_one(actual_path, golden_path, threshold_pct=DEFAULT_THRESHOLD_PCT):
     golden_img = Image.open(golden_path).convert("RGB")
 
     if actual_img.size != golden_img.size:
-        return False, f"tailles différentes: actual={actual_img.size} golden={golden_img.size}", None
+        return (
+            False,
+            f"tailles différentes: actual={actual_img.size} golden={golden_img.size}",
+            None,
+        )
 
     diff = ImageChops.difference(actual_img, golden_img)
     bbox = diff.getbbox()
@@ -50,13 +55,18 @@ def compare_one(actual_path, golden_path, threshold_pct=DEFAULT_THRESHOLD_PCT):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--update-golden", action="store_true",
-                         help="Écrase les images de référence par les captures actuelles (après revue humaine)")
+    parser.add_argument(
+        "--update-golden",
+        action="store_true",
+        help="Écrase les images de référence par les captures actuelles (après revue humaine)",
+    )
     parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD_PCT)
     args = parser.parse_args()
 
     if not ACTUAL_DIR.exists() or not any(ACTUAL_DIR.glob("*.png")):
-        print(f"Aucune capture dans {ACTUAL_DIR} -- lancer d'abord les scénarios e2e_runner.tscn.")
+        print(
+            f"Aucune capture dans {ACTUAL_DIR} -- lancer d'abord les scénarios e2e_runner.tscn."
+        )
         sys.exit(1)
 
     if args.update_golden:
@@ -71,7 +81,12 @@ def main():
     for actual_path in sorted(ACTUAL_DIR.glob("*.png")):
         golden_path = GOLDEN_DIR / actual_path.name
         if not golden_path.exists():
-            failures.append((actual_path.name, "pas d'image de référence -- lancer --update-golden après revue"))
+            failures.append(
+                (
+                    actual_path.name,
+                    "pas d'image de référence -- lancer --update-golden après revue",
+                )
+            )
             continue
         checked += 1
         ok, msg, diff = compare_one(actual_path, golden_path, args.threshold)

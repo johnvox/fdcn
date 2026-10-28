@@ -5,9 +5,10 @@ Ce module est le plus petit et le plus mécanique de la chaîne de compilation,
 mais toute régression ici fausse silencieusement toutes les conditions du jeu
 (qui contrôlent l'accès aux chapitres et l'application des stats).
 """
+
 import pytest
 
-from condition_node import ConditionNode, ConditionNodeFactory
+from fdcn.graph import ConditionNode, ConditionNodeFactory
 
 
 def parse(expr):
@@ -126,13 +127,16 @@ class TestKnownParserLimitations:
         assert n.operator == "or"
         assert [s.value for s in n.sons] == ["A", "B", "C"]
 
-    @pytest.mark.parametrize("expr", [
-        "((A|B)&(C|D))",   # parenthese englobant toute l'expression
-        "A&((B|C)&D)",     # vraie imbrication a 2 niveaux, meme partielle
-        "((A|B)&C)&D",
-        "((A)",
-        "()",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            "((A|B)&(C|D))",  # parenthese englobant toute l'expression
+            "A&((B|C)&D)",  # vraie imbrication a 2 niveaux, meme partielle
+            "((A|B)&C)&D",
+            "((A)",
+            "()",
+        ],
+    )
     def test_nesting_beyond_one_level_raises(self, expr):
         # Le parseur ne supporte qu'UN seul niveau de parenthese à la fois.
         # Dès qu'on imbrique une parenthèse dans une autre (peu importe la

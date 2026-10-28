@@ -1,4 +1,5 @@
 """Tests unitaires de graph.py (conteneur id -> Node)."""
+
 import pytest
 
 from graph import Graph

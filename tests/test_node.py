@@ -1,6 +1,7 @@
 """
 Tests unitaires de node.py (unité métier du graphe de chapitres).
 """
+
 import pytest
 
 from node import Node
@@ -77,12 +78,12 @@ class TestLabel:
     def test_secret_label_when_no_custom_label(self):
         n = Node(7)
         n.set_secret()
-        assert "FONT COLOR=\"orange\"" in n.get_label()
+        assert 'FONT COLOR="orange"' in n.get_label()
 
     def test_combat_label_when_no_custom_label_nor_secret(self):
         n = Node(7)
         n.set_combat({"x": "y"})
-        assert "FONT COLOR=\"red\"" in n.get_label()
+        assert 'FONT COLOR="red"' in n.get_label()
 
 
 class TestSonsAndComputed:
@@ -108,11 +109,28 @@ class TestSonsAndComputed:
     def test_get_computed_exposes_all_expected_keys(self):
         n = Node(1)
         computed = n.get_computed()
-        for key in ("id", "ending", "success", "sons", "chapter", "arc",
-                    "is_combat", "combat", "label", "secret", "secret_jumps",
-                    "ending_id", "ending_txt", "ending_type",
-                    "jump_conditions", "jump_conditions_txts",
-                    "aquire", "remove", "stats", "stats_cond"):
+        for key in (
+            "id",
+            "ending",
+            "success",
+            "sons",
+            "chapter",
+            "arc",
+            "is_combat",
+            "combat",
+            "label",
+            "secret",
+            "secret_jumps",
+            "ending_id",
+            "ending_txt",
+            "ending_type",
+            "jump_conditions",
+            "jump_conditions_txts",
+            "aquire",
+            "remove",
+            "stats",
+            "stats_cond",
+        ):
             assert key in computed
 
 
