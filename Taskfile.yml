@@ -1,6 +1,6 @@
 # https://taskfile.dev
 
-version: '3'
+version: "3"
 
 vars:
   GREETING: Hello, World!
@@ -8,7 +8,11 @@ vars:
 tasks:
   install:tools:
     cmds:
-    - uv sync
+      - uv sync
   fmt:
     cmds:
-    - ruff format fdcn
+      - ruff format fdcn
+  generate:graph:
+    cmd: uv run -m fdcn
+  python:usage:
+    cmd: uv run -m fdcn --help

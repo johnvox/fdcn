@@ -1,40 +1,42 @@
-import codecs
 import json
 import os
-import pathlib
 import sys
+from pathlib import Path
 
 import click
 import graphviz
 
 from fdcn.graph import ENDINGS, Graph
 
-DATA_DIR = pathlib.Path(__file__).parent / "data"
+type JSON = dict[str, JSON] | list[JSON] | str | int | float | bool | None
+
+PARENT_DIR = (Path(__file__).parent / "..").resolve()
+GODOT_DATA_DIR = PARENT_DIR / "application" / ".data" / "generated"
+BOOK_DATA_DIR = PARENT_DIR / "data"
+BOOKS = [x for x in BOOK_DATA_DIR.glob("*")]
 
 
-def load_json_file(file_name):
-    # type: (str) -> Any
-    with codecs.open(file_name, "r", "utf8") as f:
-        data = json.loads(f.read())
-    return data
+def load_json_file(file: Path) -> JSON:
+    return json.load(file.open("r", encoding="utf-8"))
 
 
 @click.command()
-@click.option("--book", type=click.Choice("fcdn", "cdsi"), default="fcdn")
+@click.option("--book", type=click.Choice(BOOKS), default=BOOKS[0], show_default=True)
 @click.option(
     "--output-dir",
-    type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path),
-    default="graph",
+    type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=Path),
+    default=GODOT_DATA_DIR,
+    show_default=True,
 )
-def fdcn(book, output_dir):
+def fdcn(book: Path, output_dir: Path):
     print(f"Vous avez choisi le livre {book}.")
-    display_graph = graphviz.Digraph("G", filename=output_dir / f"fdcn_full-{book}", format="png")
-    book_data = load_json_file(f"fdcn-{book}.json")
+    display_graph = graphviz.Digraph("G", filename=output_dir / book.name, format="png")
+    book_data = load_json_file(book / "book.json")
 
     node_created = set()
 
     node_graph = Graph()
-    for node_id_str in book_data():
+    for node_id_str in book_data:
         node_graph.create_node(node_id_str)
 
     for idx, n in book_data.items():
@@ -120,12 +122,12 @@ def fdcn(book, output_dir):
                 node.add_son(son)
 
     # [1, "Plante-Citrouille"]
-    arcs = load_json_file(f"fdcn-{book}.arcs.json")
+    arcs = load_json_file(GODOT_DATA_DIR / book / "arcs.json")
 
     # (arc_name, Start of sub, name, stops)
-    sub_arcs = load_json_file(f"fdcn-{book}.sub_arcs.json")
+    sub_arcs = load_json_file(GODOT_DATA_DIR / book / "sub_arcs.json")
 
-    manual_sub_arcs = load_json_file(f"fdcn-{book}.manual_sub_arcs.json")
+    manual_sub_arcs = load_json_file(GODOT_DATA_DIR / book / "manual_sub_arcs.json")
 
     # Tag nodes with arc, from lower to higher so we don't rewrite them
     for arc_start, arc_name in reversed(arcs):
@@ -239,7 +241,7 @@ def fdcn(book, output_dir):
 
     all_discoverd_objects = all_remove | all_aquire | all_conditions
 
-    all_objs = load_json_file(f"fdcn-{book}.all_objects.json")
+    all_objs = load_json_file(GODOT_DATA_DIR / book / "all_objects.json")
     all_objs_names = set(all_objs.keys())
 
     if all_discoverd_objects != all_objs_names:
@@ -264,11 +266,10 @@ def fdcn(book, output_dir):
         node = node_graph.get_node(int(node_id_str))
         node_data["computed"] = node.get_computed()
 
-    new_book_data_string = json.dumps(book_data, indent=4, ensure_ascii=False, sort_keys=True)  # allow utf8
-    with codecs.open(f"fdcn-{book}-compilated-data.json", "w", "utf8") as f:
-        f.write(new_book_data_string)
+    file = output_dir / "compilated-data.json"
+    json.dump(book_data, file.open("w", encoding="utf-8"), indent=4, ensure_ascii=False, sort_keys=True)
 
-    sucess_txt = load_json_file(f"all-success-{book}.json")
+    sucess_txt = load_json_file(GODOT_DATA_DIR / book / "all_success.json")
     print("Success txt", sucess_txt)
 
     def get_success_txt(_id):
@@ -386,9 +387,9 @@ def fdcn(book, output_dir):
 
     print("Generating json files for UI")
     for k, v in to_dump_as_json.items():
-        with codecs.open(f"fdcn-{book}-compilated-{k}.json", "w", "utf8") as f:
-            f.write(json.dumps(v, indent=4, ensure_ascii=False, sort_keys=True))
-            print(" - %s = OK" % k)
+        file = output_dir / f"compilated-{k}.json"
+        json.dump(v, file.open("w", encoding="utf-8"), indent=4, ensure_ascii=False, sort_keys=True)
+        print(" - %s = OK" % k)
 
     # Windows need too many deps, like dot.exe, so skip on it
     if os.name != "nt":
